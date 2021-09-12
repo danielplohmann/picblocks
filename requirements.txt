@@ -1,0 +1,5 @@
+smda
+flask
+werkzeug
+waitress
+tqdm
