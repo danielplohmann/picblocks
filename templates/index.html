@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Malpedia BlocksDB</title>
+		<!-- CSS only -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+		<link rel="stylesheet" href="/static/css/styles.css"/>
+	</head>
+	<body>
+
+		<!-- Navbar -->
+		<nav class="py-3 navbar navbar-expand-lg fixed-top auto-hiding-navbar navbar-light bg-light">
+			<div class="container">
+				<a class="navbar-brand" href="#">Malpedia BlocksDB</a>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav ms-auto">
+						<li class="nav-item">
+							<a class="nav-link active" aria-current="page" href="#">Home</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#">About</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#">Statistics</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="#">Contact</a>
+						</li>
+					</ul>            
+				</div>
+			</div>
+		</nav>
+		<!-- Navbar End -->
+
+		<!-- Hero section -->
+		<section id="hero">
+			<div class="container">
+				<div class="row">
+					<div class="col">
+						<p>
+						An experimental project of using PIC hashing over basic blocks. <br><br>Upload an executable to have it automatically dissected by SMDA. <br>All its basic blocks of length 4+ will then be hashed and matched against all unpacked and dumped binaries in Malpedia. <br><br>Alternatively send your binary via POST request to /api/blocks.
+						</p>
+						<p>
+       <table class="table">
+	       <tr>
+		       <th class="not_mapped_style" style="text-align:left">Database: </th>
+		       <td>{{db_online}}</td>
+	       </tr>
+	       <tr>
+		       <th class="not_mapped_style" style="text-align:left">Tracked Families: </th>
+		       <td>{{tracked_families}}</td>
+	       </tr>
+	       <tr>
+		       <th class="not_mapped_style" style="text-align:left">Number of Samples: </th>
+		       <td>{{number_samples}}</td>
+	       </tr>
+	       <tr>
+		       <th class="not_mapped_style" style="text-align:left">Number of Blockhashes: </th>
+		       <td>{{number_blocks}}</td>
+	       </tr>
+       </table>
+						
+						</p>
+
+      <form  action = "/blocks" method = "POST" enctype = "multipart/form-data">
+	 <div class="form-group">
+		 <input type="file" name = "binary"  class="btn btn-primary mb-2" id="exampleFormControlFile1">
+	</div>
+	 <div class="form-group">
+        	 <p>optional parameters (when handling a buffer):</p>
+            <input type="radio" id="bit32" name="bitness" value="32" checked>
+            <label for="bit32">32bit</label>
+            <input type="radio" id="bit64" name="bitness" value="64">
+            <label for="bit64">64bit</label>
+            <input style="visibility:hidden;" type="radio" id="bit0" name="bitness" value="0" checked>
+            <label for="baseaddress">Base address:</label>
+            <input type="text" id="baseaddress" name="baseaddress"  placeholder="0x">
+        </div>
+		 <input type = "submit" class="btn btn-primary mb-2"/>
+      </form>   
+					</div>
+				</div>
+		</div>
+
