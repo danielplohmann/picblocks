@@ -107,9 +107,9 @@ def index():
         f_c = f_to_id.find({}).count()
         s_c = s_to_s.find({}).count()
         b_c = blocks.find({}).count()
-        return render_template('upload.html', db_online ="online", tracked_families = f_c, number_samples = s_c, number_blocks = b_c)
+        return render_template('index.html', db_online ="online", tracked_families = f_c, number_samples = s_c, number_blocks = b_c)
     else:
-        return render_template('upload.html', db_online ="offline", tracked_families = "0", number_samples = "0", number_blocks = "0")
+        return render_template('index.html', db_online ="offline", tracked_families = "0", number_samples = "0", number_blocks = "0")
 
 
 @app.route('/blocks', methods=['GET', 'POST'])
