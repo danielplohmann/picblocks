@@ -11,6 +11,18 @@ from flask import Flask, request, render_template, jsonify
 from picblocks.blockhasher import BlockHasher
 from picblocks.blockhashmatcher import BlockHashMatcher
 
+#TODO: Refactoring needed ! Importing from external and unique source
+import json
+try:
+    from pymongo import MongoClient
+    c       = MongoClient("mongodb://localhost:27017")
+    db      = c['malpedia']
+    f_to_id = db['family_to_id']
+    f_to_f  = db['family_id_to_family']
+    blocks  = db['blockhashes']
+    s_to_s  = db['sample_id_to_sample']
+except:
+    db = None
 
 LOG_LEVEL = logging.INFO
 LOG_FORMAT = "%(asctime)-15s: %(name)-32s - %(message)s"
@@ -91,7 +103,12 @@ def render_report(report):
 
 @app.route("/")
 def index():
-   return render_template('upload.html')
+    if db:
+        f_c = f_to_id.find({}).count()
+        s_c = s_to_s.find({}).count()
+        return render_template('upload.html', db_online ="online", tracked_families = f_c, number_samples = s_c)
+    else:
+        return render_template('upload.html', db_online ="offline", tracked_families = "0", number_samples = "0")
 
 
 @app.route('/blocks', methods=['GET', 'POST'])

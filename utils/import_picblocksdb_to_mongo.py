@@ -4,6 +4,7 @@
 # Use at your own risk
 # v:0.1 alpha
 
+#TODO: Refactoring needed ! Importing from external and unique source
 import json
 from pymongo import MongoClient
 c       = MongoClient("mongodb://localhost:27017")
