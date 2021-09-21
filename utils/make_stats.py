@@ -28,7 +28,7 @@ if os.path.exists("db/picblocksdb.json"):
 logging.info("Done! (%5.2fs)", (time.time() - start))
 
 # Tracing verified family DB composition
-family_verified_frequency = []
+family_verified_frequency = {}
 # Tracing verified families VS detected (recognized, calculated) families
 family_verified_vs_detected = {}
 
@@ -39,19 +39,25 @@ def make_stats(matching_report):
     verified_family =  matching_report['original_family']
 
     # keep trace of verified families
-    for v_f in family_verified_frequency:
-        if v_f['family'] == verified_family:
-            v_f['frequency'] += 1
-        else:
-            family_verified_frequency.append({'family': verified_family, 'frequency': 1})
+    if verified_family in family_verified_frequency:
+            family_verified_frequency[verified_family] += 1
+    else:
+            family_verified_frequency[verified_family] = 1
 
     if verified_family not in family_verified_vs_detected :
-        family_verified_vs_detected[verified_family] = []
+        family_verified_vs_detected[verified_family] = {}
 
     for family in matching_report['family_matches']:
         if float(family['nonlib_perc']) < float(th):
             continue
-        family_verified_vs_detected[verified_family].append(family['family'])
+
+        if verified_family not in family_verified_vs_detected:
+            family_verified_vs_detected[verified_family] = {}
+
+        if family['family'] in family_verified_vs_detected[verified_family]:
+            family_verified_vs_detected[verified_family][family['family']] += 1
+        else:
+            family_verified_vs_detected[verified_family][family['family']] = 1
         logging.info("Adding to verified family %s, similarity to family %s (%0.3f)" % (verified_family, family['family'], family['nonlib_perc']))
     return family_verified_vs_detected
 
