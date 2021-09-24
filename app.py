@@ -3,6 +3,7 @@ import os
 import time
 import logging
 import hashlib
+import json
 
 from waitress import serve
 from werkzeug.utils import secure_filename
@@ -21,6 +22,7 @@ try:
     f_to_f  = db['family_id_to_family']
     blocks  = db['blockhashes']
     s_to_s  = db['sample_id_to_sample']
+    s_s     = db['statistics']
 except:
     db = None
 
@@ -160,14 +162,20 @@ def render_report(report, template):
 
 @app.route("/")
 def index():
-    if db:
-        f_c = f_to_id.find({}).count()
-        s_c = s_to_s.find({}).count()
-        b_c = blocks.find({}).count()
-        return render_template('index.html', db_online ="online", tracked_families = f_c, number_samples = s_c, number_blocks = b_c)
-    else:
-        return render_template('index.html', db_online ="offline", tracked_families = "0", number_samples = "0", number_blocks = "0")
+    return render_template('index.html')
 
+@app.route('/stats', methods=['GET'])
+def get_stats():
+    if request.method == 'GET':
+        if db:
+            f_c = f_to_id.find({}).count()
+            s_c = s_to_s.find({}).count()
+            b_c = blocks.find({}).count()
+            cursor = s_s.find({})
+            stats = list(cursor)
+            return render_template('stats.html', db_online ="online", tracked_families = f_c, number_samples = s_c, number_blocks = b_c, s_stats = stats)
+        else:
+            return render_template('stats.html', db_online ="offline", tracked_families = "0", number_samples = "0", number_blocks = "0", s_stats = stats)
 
 @app.route('/blocks', methods=['GET', 'POST'])
 def upload_file():
