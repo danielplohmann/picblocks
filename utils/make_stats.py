@@ -1,3 +1,7 @@
+# Simple script to generate statistics against a given database.
+# Very alpha stage, use at your own risk
+# v:0.1 alpha
+
 import os
 import time
 import logging
