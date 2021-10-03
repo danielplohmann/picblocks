@@ -16,6 +16,7 @@ try:
 except:
     db = None
 
+bl = 'block-reports/'
 LOG_LEVEL = logging.INFO
 LOG_FORMAT = "%(asctime)-15s: %(name)-32s - %(message)s"
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
@@ -63,7 +64,7 @@ def make_stats(matching_report):
 
 
 logging.info("Matching Existing Reports to entire DB")
-for root, subdir, files in sorted(os.walk('block-reports/')):
+for root, subdir, files in sorted(os.walk(bl)):
     for filename in sorted(files):
         logging.info("Working on %s" % filename)
         f, e = os.path.splitext(filename)

@@ -105,26 +105,17 @@
           <div class="col">
             <!--Istogramma di tutte le famiglie verificate ( key() ) -->
             <h3>Verified families</h3>
+	    <div>
+		    A verified family is a Malware family that has been verified inside the given database. The verified families are also known as "original family" inside the matching reports. In the following graph we represent the verified families by frequency, in order to check what are the most common famiy verified over time on the used database.
+	    </div>
             <canvas
               id="topVerifiedFamiliesChart"
               width="400"
               height="400"
             ></canvas>
-            <!--
-              Il numero di famiglie verificate che non sono state individuate
-              (ovvero se nel item() di key() non c'e' il valore key() con
-              frequenza almeno TOP5 ), numero assoluto e percentuale sul totale
-              delle famiglie verificate
-
-              Il numero di famiglie verificate che sono state individuate (il
-              contrario di quello sopra), numero assoluto e percentuale sul
-              totale delle familgie verificate
-
-              [DB] se uso un quartile o comuqnue un valore TOPX ovviamente la
-              percentuale sarà sempre fissa. Per questo uso media e dev std
-              per calcolare il cutoff (visto che la distribuzione non è normale
-              ci potrebbe essere qualcosa di particolare)
-            -->
+	    <div>
+		    The following counters represent the total verified families in the given database, all the identified families (by meaning of checked againsti the given database with correct identification) and the unidentified families (in other words, all the checked families that had not a match against the current database).
+	    </div>
             <ul>
               <li>
                 <b>Verified families count:</b> <span id="totalFamilies"></span>
@@ -140,6 +131,9 @@
             </ul>
             <!-- Le famiglie senza detection -->
             <h3>Families without detections</h3>
+	    <div>
+		    Following the families that had no detection once run against the given database.
+	    </div>
             <div class="row">
               <div class="col">
                 <ul id="familiesWithoutDetections1"></ul>
@@ -155,27 +149,25 @@
               <ul id="familiesWithoutDetectionsPagination"></ul>
             </nav>
 
-            <!--
-                Istogramma che le principali famiglie riconosciute (non verificate,
-                quindi di tutti gli elementi di ogni array per ogni famiglia
-                verificata)
-            -->
             <h3>Top detected families</h3>
+	    <div>
+		    The following graph shows the main identified (but not verified) families found by matching the generated block_reports against the given database. In other words all the family that the system identified, not necessary verified: all the array of identified families for each verified family.
+	    </div>
             <canvas
               id="topDetectedFamiliesChart"
               width="400"
               height="400"
             ></canvas>
-
-            <!--
-                Le famiglie verificate che sono piu singolari, ovvero che non
-                condividono codice con altre famiglie (ovvero quelle che hanno
-                bassa soglia di somiglianza)
-            -->
             <h3>
-              Peculiar families
+              Singular families
               <small>(families with less code resemblance)</small>
             </h3>
+	    <div>
+		    Singular families are the families with less code reuse. In other words such a families does not share much blocks with other families in the given database.
+
+	    </div>
+	    <div>
+	    </div>
             <div class="row">
               <div class="col">
                 <ul id="peculiarFamilies1"></ul>
@@ -190,14 +182,10 @@
             <nav>
               <ul id="peculiarFamiliesPagination"></ul>
             </nav>
-
-            <!--
-                Le famiglie verificate che piu si assomigliano (che condividono
-                le stesse attriuzioni con frequenza TOP5) pensare magare ad un
-                grafico a cluster o a palle... vedi tu quello che meglio si
-                addice
-            -->
             <h3>Families similarities</h3>
+	    <div>
+		    The following graph shows the similarities against a selected family. Select on the selection box the family you want to check similarities and the radio block will show you the families (in the give database) with hights similarity blocks ration.
+	    </div>
             <div class="row">
               <div class="col">
                 <select
