@@ -3,7 +3,6 @@ import os
 import time
 import logging
 import hashlib
-import json
 
 from waitress import serve
 from werkzeug.utils import secure_filename
@@ -12,23 +11,26 @@ from flask import Flask, request, render_template, jsonify
 from picblocks.blockhasher import BlockHasher
 from picblocks.blockhashmatcher import BlockHashMatcher
 
-#TODO: Refactoring needed ! Importing from external and unique source
-import json
-try:
-    from pymongo import MongoClient
-    c       = MongoClient("mongodb://localhost:27017")
-    db      = c['malpedia']
-    f_to_id = db['family_to_id']
-    f_to_f  = db['family_id_to_family']
-    blocks  = db['blockhashes']
-    s_to_s  = db['sample_id_to_sample']
-    s_s     = db['statistics']
-except:
-    db = None
 
 LOG_LEVEL = logging.INFO
 LOG_FORMAT = "%(asctime)-15s: %(name)-32s - %(message)s"
 logging.basicConfig(level=LOG_LEVEL, format=LOG_FORMAT)
+#TODO: Refactoring needed! Importing from external and unique source
+USE_DB = False
+db = None
+if USE_DB:
+    try:
+        from pymongo import MongoClient
+        c       = MongoClient("mongodb://localhost:27017")
+        db      = c['malpedia']
+        f_to_id = db['family_to_id']
+        f_to_f  = db['family_id_to_family']
+        blocks  = db['blockhashes']
+        s_to_s  = db['sample_id_to_sample']
+        s_s     = db['statistics']
+    except:
+        db = None
+        logging.error("Could not initialize database.")
 
 
 app = Flask(__name__)
@@ -92,6 +94,8 @@ def render_report(report, template):
             alternate += 1
         index += 1
     output += "</table>\n"
+    output += "<p></p>"
+    output += "<h3>Information</h3>"
     output += "<p>results per matching class shown as (bytes, blocks, percent of bytes).<br />"
     output += "libraries excluded: filter out blocks known from a set of 3rd party libraries, including MSVC.<br />"
     output += "frequency adjusted: for the remainder, block scores are increasingly penalized when occurring in three or more families.<br />"
@@ -162,20 +166,26 @@ def render_report(report, template):
 
 @app.route("/")
 def index():
-    return render_template('index.html')
+    
+    return render_template('index.html', db_timestamp=matcher.db_timestamp)
+
+@app.route("/about")
+def about():
+    return render_template('disabled.html')
 
 @app.route('/stats', methods=['GET'])
 def get_stats():
     if request.method == 'GET':
-        if db:
+        stats = []
+        if USE_DB and db:
             f_c = f_to_id.find({}).count()
             s_c = s_to_s.find({}).count()
             b_c = blocks.find({}).count()
             cursor = s_s.find({})
             stats = list(cursor)
-            return render_template('stats.html', db_online ="online", tracked_families = f_c, number_samples = s_c, number_blocks = b_c, s_stats = stats)
+            return render_template('stats.html', db_online ="online", tracked_families=f_c, number_samples=s_c, number_blocks=b_c, s_stats=stats)
         else:
-            return render_template('stats.html', db_online ="offline", tracked_families = "0", number_samples = "0", number_blocks = "0", s_stats = stats)
+            return render_template('disabled.html')
 
 @app.route('/blocks', methods=['GET', 'POST'])
 def upload_file():

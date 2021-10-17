@@ -73,6 +73,10 @@ button{
 	border-radius: 50px !important;
 }
 
+#hero {
+	margin-top: 50px;
+}
+
 #hero .col{
 	justify-content: center;
 	flex-direction: column;

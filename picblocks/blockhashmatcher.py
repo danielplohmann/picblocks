@@ -1,7 +1,8 @@
-import math
-import json
 import os
 import sys
+import json
+import math
+import datetime
 from collections import defaultdict
 
 try:
@@ -16,6 +17,7 @@ from .blockhasher import BlockHasher
 class BlockHashMatcher(object):
 
     def __init__(self):
+        self.db_timestamp = datetime.datetime.utcnow().strftime("%Y-%d-%dT%H:%M:%SZ")
         self.blockhashes = {}
         self.family_to_id = {}
         self.family_id_to_family = {}
@@ -49,6 +51,7 @@ class BlockHashMatcher(object):
         """ load a previously processed database of blockhashes """
         with open(filepath, "r") as fin:
             blockhash_db = json.load(fin)
+            self.db_timestamp = blockhash_db["timestamp"]
             self.family_to_id = blockhash_db["family_to_id"]
             self.family_id_to_family = {int(k): v for k, v in blockhash_db["family_id_to_family"].items()}
             self.sample_id_to_sample = {int(k): v for k, v in blockhash_db["sample_id_to_sample"].items()}
@@ -58,6 +61,7 @@ class BlockHashMatcher(object):
         """ save the current database of blockhashes """
         with open(filepath, "w") as fout:
             json_db = {
+                "timestamp": datetime.datetime.utcnow().strftime("%Y-%d-%dT%H:%M:%SZ"),
                 "family_to_id": self.family_to_id,
                 "family_id_to_family": self.family_id_to_family,
                 "sample_id_to_sample": self.sample_id_to_sample,

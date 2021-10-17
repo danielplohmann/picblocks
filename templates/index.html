@@ -21,13 +21,10 @@
 							<a class="nav-link active" aria-current="page" href="/">Home</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="#">About</a>
-						</li>
-						<li class="nav-item">
 							<a class="nav-link" href="/stats">Statistics</a>
 						</li>
 						<li class="nav-item">
-							<a class="nav-link" href="#">Contact</a>
+							<a class="nav-link" href="/about">About</a>
 						</li>
 					</ul>            
 				</div>
@@ -42,28 +39,35 @@
 					<div class="col">
 						<p>
 						An experimental project of using PIC hashing over basic blocks. <br><br>
-						Upload an executable to have it automatically dissected by SMDA. <br>
-						All its basic blocks of length 4+ will then be hashed and matched against all unpacked and dumped binaries in Malpedia. <br><br>
+						Upload an executable to have it automatically dissected by <a href="https://github.com/danielplohmann/smda">SMDA</a>.<br>
+						All its basic blocks of length 4+ will then be hashed and matched against all unpacked and dumped binaries in <a href="https://malpedia.caad.fkie.fraunhofer.de">Malpedia</a>. <br><br>
 						Alternatively send your binary via POST request to /api/blocks.
 						</p>
 
-      <form  action = "/blocks" method = "POST" enctype = "multipart/form-data">
-	 <div class="form-group">
-		 <input type="file" name = "binary"  class="btn btn-primary mb-2" id="exampleFormControlFile1">
-	</div>
-	 <div class="form-group">
-        	 <p>optional parameters (when handling a buffer):</p>
-            <input type="radio" id="bit32" name="bitness" value="32" checked>
-            <label for="bit32">32bit</label>
-            <input type="radio" id="bit64" name="bitness" value="64">
-            <label for="bit64">64bit</label>
-            <input style="visibility:hidden;" type="radio" id="bit0" name="bitness" value="0" checked>
-            <label for="baseaddress">Base address:</label>
-            <input type="text" id="baseaddress" name="baseaddress"  placeholder="0x">
-        </div>
-		 <input type = "submit" class="btn btn-primary mb-2"/>
-      </form>   
+					<form  action = "/blocks" method = "POST" enctype = "multipart/form-data">
+					<div class="form-group">
+						<input type="file" name = "binary"  class="btn btn-primary mb-2" id="exampleFormControlFile1">
+					</div>
+					<div class="form-group">
+							<p>optional parameters (when handling a buffer):</p>
+							<input type="radio" id="bit32" name="bitness" value="32" checked>
+							<label for="bit32">32bit</label>
+							<input type="radio" id="bit64" name="bitness" value="64">
+							<label for="bit64">64bit</label>
+							<input style="visibility:hidden;" type="radio" id="bit0" name="bitness" value="0" checked>
+							<label for="baseaddress">Base address:</label>
+							<input type="text" id="baseaddress" name="baseaddress"  placeholder="0x">
+						</div>
+						<input type = "submit" class="btn btn-primary mb-2"/>
+					</form>   
+					</div>
+					<p></p>
+					<hr>
+					<div>
+						<small>database timestamp: {{db_timestamp}}</small>
 					</div>
 				</div>
 		</div>
-
+	</section>
+	</body>
+</html>
