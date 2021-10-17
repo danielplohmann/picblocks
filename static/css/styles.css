@@ -8,6 +8,26 @@ nav{
 	background-color: white;
 }
 
+.gd {
+	background-color: #a6ffa6;
+}
+.gl {
+	background-color: #d9ffd9;
+}
+.ed {
+	background-color: #aaaaaa;
+}
+.el {
+	background-color: #cccccc;
+}
+.od {
+	background-color: #eeeeee;
+}
+.ol {
+	background-color: #f8f8f8;
+}
+
+
 .navbar-brand img {
 	max-height: 50px;
 }

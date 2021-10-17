@@ -51,7 +51,7 @@ def render_report(report, template):
     unmatch_sc= report['unmatched_score']
 
     output = f""
-    output += f"<table>\n<tr><th>#</th><th>family</th><th>direct match</th><th>libraries excluded</th><th>frequency adjusted</th><th>uniquely matched</th></tr>\n"
+    output += f"<table>\n<tr><th>#</th><th>family</th><th colspan='3'>direct match</th><th colspan='3'>libraries excluded</th><th colspan='3'>frequency adjusted</th><th colspan='3'>uniquely matched</th></tr>\n"
     index = 0
     alternate = 0
     for entry in report["family_matches"]:
