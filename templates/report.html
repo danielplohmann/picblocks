@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Malpedia BlocksDB</title>
+		<!-- CSS only -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+		<link rel="stylesheet" href="/static/css/styles.css"/>
+	</head>
+	<body>
+
+		<!-- Navbar -->
+		<nav class="py-3 navbar navbar-expand-lg fixed-top auto-hiding-navbar navbar-light bg-light">
+			<div class="container">
+				<a class="navbar-brand" href="#">Malpedia BlocksDB Result</a>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav ms-auto">
+						<li class="nav-item">
+							<a class="nav-link active" aria-current="page" href="/">Home</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/about">About</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/stats">Statistics</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/contact">Contact</a>
+						</li>
+					</ul>            
+				</div>
+			</div>
+		</nav>
+		<!-- Navbar End -->
+
+		<!-- Hero section -->
+		<section id="hero">
+			<div class="container">
+				<div class="row">
+					<div class="col">
+    <h3>Input:</h3>
+    <table class="table">
+    <tr>
+	    <th class="not_mapped_style" style="text-align:left">file:</th>
+	    <td>{{file_name}}</td>
+    </tr>
+    <tr>
+	    <th class="not_mapped_style" style="text-align:left">sha256:</th>
+	    <td>{{sha256}}</td>
+    </tr>
+    <tr>
+	    <th class="not_mapped_style" style="text-align:left">bitness:</th>
+	    <td>{{bitness}}</td>
+    </tr>
+    <tr>
+	    <th class="not_mapped_style" style="text-align:left">extracted:</th>
+	    <td>{{extracted}} block hashes with {{block_b}} bytes.</td>
+    </tr>
+    </table>
+    <p>Not matched: {{unmatched}} blocks with {{unmatch_sc}} bytes.</p>
+
+					</div>
+				</div>
+				<div class="row">
+					<div class="col">
+						{{out_html|safe}}
+					</div>
+				</div>
+			</div>
+		</section>

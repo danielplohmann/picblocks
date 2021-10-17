@@ -3,3 +3,4 @@ flask
 werkzeug
 waitress
 tqdm
+pymongo
