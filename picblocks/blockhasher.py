@@ -94,9 +94,7 @@ class BlockHasher(object):
             return struct.unpack("Q", hashlib.sha256(as_bytes).digest()[:8])[0]
         return struct.unpack("I", hashlib.sha256(as_bytes).digest()[:4])[0]
 
-    def getBlockhashesForFunction(self, smda_report: "SmdaReport", smda_function: "SmdaFunction", min_block_size=4, hash_size=4):
-        image_lower = smda_report.base_addr
-        image_upper = image_lower + smda_report.binary_size
+    def getBlockhashesForFunction(self, smda_function: "SmdaFunction", image_lower: int, image_upper: int, min_block_size=4, hash_size=4):
         blockhashes = {}
         for block in smda_function.getBlocks():
             if block.length >= min_block_size:
