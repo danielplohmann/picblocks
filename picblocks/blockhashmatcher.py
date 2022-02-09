@@ -2,8 +2,9 @@ import os
 import sys
 import json
 import math
+import logging
 import datetime
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 try:
     # optionally use tqdm to render progress (should not be a package requirement)
@@ -12,6 +13,11 @@ except:
     tqdm = None
 
 from .blockhasher import BlockHasher
+
+# Only do basicConfig if no handlers have been configured
+if len(logging._handlerList) == 0:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
+LOG = logging.getLogger(__name__)
 
 
 class BlockHashMatcher(object):
@@ -47,7 +53,7 @@ class BlockHashMatcher(object):
                         is_library = False if "is_library" not in blockhash_report else blockhash_report["is_library"]
                         self.blockhashes[int_hash][int_size].append((family_id, sample_id, fid, is_library))
 
-    def load_db(self, filepath):
+    def loadDb(self, filepath):
         """ load a previously processed database of blockhashes """
         with open(filepath, "r") as fin:
             blockhash_db = json.load(fin)
@@ -57,17 +63,53 @@ class BlockHashMatcher(object):
             self.sample_id_to_sample = {int(k): v for k, v in blockhash_db["sample_id_to_sample"].items()}
             self.blockhashes = {int(k): {int(ki): vi for ki, vi in v.items()} for k, v in blockhash_db["blockhashes"].items()}
 
-    def save_db(self, filepath):
+    def saveDb(self, filepath):
         """ save the current database of blockhashes """
         with open(filepath, "w") as fout:
             json_db = {
-                "timestamp": datetime.datetime.utcnow().strftime("%Y-%d-%dT%H:%M:%SZ"),
+                "timestamp": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
                 "family_to_id": self.family_to_id,
                 "family_id_to_family": self.family_id_to_family,
                 "sample_id_to_sample": self.sample_id_to_sample,
                 "blockhashes": self.blockhashes,
             }
             json.dump(json_db, fout)
+
+    def getDbStats(self):
+        """ return statistics for currently loaded DB """
+        family_ids = set()
+        library_ids = set()
+        function_ids = set()
+        num_hashes = 0
+        num_hash_and_sizes = 0
+        num_bytes = 0
+        num_bytes_unique = 0
+        hash_size_counts = Counter()
+        for block_hash, sizes in self.blockhashes.items():
+            num_hashes += 1
+            hash_size_counts[len(sizes)] += 1
+            for size, entries in sizes.items():
+                num_hash_and_sizes += 1
+                num_bytes_unique += size
+                for entry in entries:
+                    family_id, sample_id, fid, is_library = entry
+                    function_ids.add(f"{sample_id}.{fid}")
+                    num_bytes += size
+                    if is_library:
+                        library_ids.add(family_id)
+                    else:
+                        family_ids.add(family_id)
+        return {
+            "num_families": len(family_ids),
+            "num_libraries": len(library_ids),
+            "num_files": len(self.sample_id_to_sample),
+            "num_functions": len(function_ids),
+            "num_hashes": num_hashes,
+            "num_hash_and_sizes": num_hash_and_sizes,
+            "num_bytes": num_bytes,
+            "num_bytes_unique": num_bytes_unique,
+            "hash_size_counts": dict(hash_size_counts)
+        }
 
     def match(self, blockhash_report):
         """ match a blockhash report against the database """
@@ -84,7 +126,7 @@ class BlockHashMatcher(object):
             "unmatched_hashes": 0,
             "family_matches": []
         }
-        print(f"Using {len(self.family_to_id)} families, {len(self.sample_id_to_sample)} samples with {len(self.blockhashes)} hashes for matching.")
+        LOG.debug(f"Using {len(self.family_to_id)} families, {len(self.sample_id_to_sample)} samples with {len(self.blockhashes)} hashes for matching.")
         sample_matches = defaultdict(int)
         # bytes
         family_bytes = defaultdict(int)
@@ -138,12 +180,12 @@ class BlockHashMatcher(object):
                         unmatched_blocks += 1
         match_report["unmatched_score"] = unmatched_score
         match_report["unmatched_blocks"] = unmatched_blocks
-        print(f"Input: {blockhash_report['filename']} ({blockhash_report['family']}/{blockhash_report['version']}) - {blockhash_report['block_bytes']:,d} bytes.")
-        print(f"Unmatched blocks: {unmatched_blocks:,d}, {unmatched_score:,d} bytes.")
-        print("Family matches: ")
+        LOG.debug(f"Input: {blockhash_report['filename']} ({blockhash_report['family']}/{blockhash_report['version']}) - {blockhash_report['block_bytes']:,d} bytes.")
+        LOG.debug(f"Unmatched blocks: {unmatched_blocks:,d}, {unmatched_score:,d} bytes.")
+        LOG.debug("Family matches: ")
         index = 1
-        print("*" * 93)
-        print(f"{'#':>2}: {'id':>5} | {'family':>30} | {'bytescore':>9} | {'%':>6} | {'nolib%':>6} | {'adj%':>6} | {'uniq%':>6}")
+        LOG.debug("*" * 93)
+        LOG.debug(f"{'#':>2}: {'id':>5} | {'family':>30} | {'bytescore':>9} | {'%':>6} | {'nolib%':>6} | {'adj%':>6} | {'uniq%':>6}")
         for family_id, direct_bytes in sorted(family_bytes.items(), key=lambda x: x[1], reverse=True):
             nonlib_bytes = non_library_bytes[family_id]
             adj_bytes = adj_family_bytes[family_id]
@@ -166,9 +208,9 @@ class BlockHashMatcher(object):
             }
             match_report["family_matches"].append(family_result)
             if index < 20 or unique_bytes > 0:
-                print(f"{index:>5,d}: {family_id:>5,d} | {self.family_id_to_family[family_id]:>30} | {direct_bytes:>9,d} | {100 * direct_bytes / blockhash_report['block_bytes']:>6.2f} | {100 * nonlib_bytes / blockhash_report['block_bytes']:>6.2f} | {100 * adj_bytes / blockhash_report['block_bytes']:>6.2f} | {100 * unique_bytes / blockhash_report['block_bytes']:>6.2f}")
+                LOG.debug(f"{index:>5,d}: {family_id:>5,d} | {self.family_id_to_family[family_id]:>30} | {direct_bytes:>9,d} | {100 * direct_bytes / blockhash_report['block_bytes']:>6.2f} | {100 * nonlib_bytes / blockhash_report['block_bytes']:>6.2f} | {100 * adj_bytes / blockhash_report['block_bytes']:>6.2f} | {100 * unique_bytes / blockhash_report['block_bytes']:>6.2f}")
             index += 1
-        print("*" * 93)
+        LOG.debug("*" * 93)
         return match_report
 
 
@@ -183,7 +225,7 @@ if __name__ == "__main__":
     if target is not None and os.path.isfile(target):
         if os.path.exists("db/picblocksdb.json"):
             print("Loading cached DB: db/picblocksdb.json")
-            matcher.load_db("db/picblocksdb.json")
+            matcher.loadDb("db/picblocksdb.json")
         else:
             print("No cached DB found, aggregating blockhash reports...")
             dir_iter = tqdm.tqdm(os.listdir(blocks_path)) if tqdm is not None else os.listdir(blocks_path)
@@ -191,7 +233,7 @@ if __name__ == "__main__":
                 if filename.endswith(".blocks"):
                     matcher.load(blocks_path + os.sep + filename)
             print("saving DB...")
-            matcher.save_db("db/picblocksdb.json")
+            matcher.saveDb("db/picblocksdb.json")
         blockhash_report = hasher.processFile(target)
         print(f"#> hashed input file: {blockhash_report['num_hashes']} hashes covering {blockhash_report['block_bytes']} bytes.")
         matcher.match(blockhash_report)
@@ -202,4 +244,4 @@ if __name__ == "__main__":
             if filename.endswith(".blocks"):
                 matcher.load(blocks_path + os.sep + filename)
         print("saving DB...")
-        matcher.save_db("db/picblocksdb.json")
+        matcher.saveDb("db/picblocksdb.json")

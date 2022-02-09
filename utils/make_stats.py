@@ -29,7 +29,7 @@ matcher = BlockHashMatcher()
 start = time.time()
 logging.info("Loading BlocksDB")
 if os.path.exists("db/picblocksdb.json"):
-    matcher.load_db("db/picblocksdb.json")
+    matcher.loadDb("db/picblocksdb.json")
 logging.info("Done! (%5.2fs)", (time.time() - start))
 
 # Tracing verified family DB composition
