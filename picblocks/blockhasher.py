@@ -99,7 +99,7 @@ class BlockHasher(object):
         for block in smda_function.getBlocks():
             if block.length >= min_block_size:
                 block_size = sum([len(ins.bytes) // 2 for ins in block.getInstructions()])
-                block_hash = self.calculateBlockhash(block, lower_addr=image_lower, upper_addr=image_upper)
+                block_hash = self.calculateBlockhash(block, lower_addr=image_lower, upper_addr=image_upper, hash_size=hash_size)
                 if block_hash not in blockhashes:
                     blockhashes[block_hash] = {"hash": block_hash, "count": 0, "size": block_size}
                 blockhashes[block_hash]["count"] += 1
