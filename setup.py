@@ -10,7 +10,7 @@ requirements = ["smda"]
 
 setup(
     name='picblocks',
-    version='1.1.2',
+    version='1.1.3',
     description='A library for code similarity estimation using PIC hashing over basic blocks.',
     long_description_content_type="text/markdown",
     long_description=long_description,

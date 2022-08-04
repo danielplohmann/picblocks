@@ -5,6 +5,7 @@ import json
 import struct
 import hashlib
 import logging
+from regex import E
 
 from smda.Disassembler import Disassembler
 from smda.common.SmdaReport import SmdaReport, SmdaFunction
@@ -100,8 +101,22 @@ class BlockHasher(object):
             if block.length >= min_block_size:
                 block_size = sum([len(ins.bytes) // 2 for ins in block.getInstructions()])
                 block_hash = self.calculateBlockhash(block, lower_addr=image_lower, upper_addr=image_upper, hash_size=hash_size)
+                offset_tuple = {
+                    "offset": block.offset, 
+                    "length": block.length, 
+                    "size": block_size,
+                }
                 if block_hash not in blockhashes:
-                    blockhashes[block_hash] = {"hash": block_hash, "count": 0, "size": block_size}
+                    blockhashes[block_hash] = {
+                        "hash": block_hash, 
+                        "count": 0, 
+                        "offset_tuples": [
+                            offset_tuple
+                        ],
+                        "size": block_size
+                    }
+                else:
+                    blockhashes[block_hash]["offset_tuples"].append(offset_tuple)
                 blockhashes[block_hash]["count"] += 1
         return list(blockhashes.values())
 
