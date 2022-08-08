@@ -5,7 +5,6 @@ import json
 import struct
 import hashlib
 import logging
-from regex import E
 
 from smda.Disassembler import Disassembler
 from smda.common.SmdaReport import SmdaReport, SmdaFunction
