@@ -88,7 +88,7 @@ class BlockHasher(object):
     def calculateBlockhash(self, block, lower_addr, upper_addr, hash_size=4):
         escaped_binary_seq = []
         for instruction in block.getInstructions():
-            escaped_binary_seq.append(instruction.getEscapedBinary(IntelInstructionEscaper, lower_addr=lower_addr, upper_addr=upper_addr))
+            escaped_binary_seq.append(instruction.getEscapedBinary(IntelInstructionEscaper, escape_intraprocedural_jumps=True, lower_addr=lower_addr, upper_addr=upper_addr))
         as_bytes = bytes([ord(c) for c in "".join(escaped_binary_seq)])
         if hash_size == 8:
             return struct.unpack("Q", hashlib.sha256(as_bytes).digest()[:8])[0]
