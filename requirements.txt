@@ -1,4 +1,4 @@
-smda
+smda==1.12.7
 flask
 werkzeug
 waitress
