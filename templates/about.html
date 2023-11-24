@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>Malpedia BlocksDB - About</title>
+		<!-- CSS only -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-+0n0xVW2eSR5OomGNYDnhzAbDsOXxcvSN1TPprVMTNDbiYZCxYbOOl7+AMvyTG2x" crossorigin="anonymous">
+		<link rel="stylesheet" href="/static/css/styles.css"/>
+	</head>
+	<body>
+
+		<!-- Navbar -->
+		<nav class="py-3 navbar navbar-expand-lg fixed-top auto-hiding-navbar navbar-light bg-light">
+			<div class="container">
+				<a class="navbar-brand" href="#">Malpedia BlocksDB</a>
+				<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarSupportedContent">
+					<ul class="navbar-nav ms-auto">
+						<li class="nav-item">
+							<a class="nav-link active" aria-current="page" href="/">Home</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/stats">Statistics</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" href="/about">About</a>
+						</li>
+					</ul>            
+				</div>
+			</div>
+		</nav>
+		<!-- Navbar End -->
+
+		<!-- Hero section -->
+		<section id="hero">
+			<div class="container">
+				<div class="row">
+					<div class="col">
+						<h2>Database:</h2>
+                    </div>
+                    <div>
+                        <table class="table">
+                            <tr><th>Aspect</th><th>Value</th><th>unique</th></tr>
+                            <tr><td>Families</td><td>{{ '{0:,}'.format(num_families | int) }}</td><td></td></tr>
+                            <tr><td>Libraries</td><td>{{ '{0:,}'.format(num_libraries | int) }}</td><td></td></tr>
+                            <tr><td>Files</td><td>{{ '{0:,}'.format(num_files | int) }}</td><td></td></tr>
+                            <tr><td>Functions</td><td>{{ '{0:,}'.format(num_functions | int) }}</td><td></td></tr>
+                            <tr><td>Hashes</td><td>{{ '{0:,}'.format(num_hash_and_sizes | int) }}</td><td>{{ '{0:,}'.format(num_hashes | int) }}</td></tr>
+                            <tr><td>Bytes</td><td>{{ '{0:,}'.format(num_bytes | int) }}</td><td>{{ '{0:,}'.format(num_bytes_unique | int) }}</td></tr>
+                        </table>
+                    </div>
+						<small>database timestamp: {{db_timestamp}}</small>
+					</div>
+				</div>
+		</div>
+	</section>
+	</body>
+</html>

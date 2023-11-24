@@ -1,3 +1,4 @@
+from fileinput import filelineno
 import os
 import re
 import sys
@@ -260,11 +261,16 @@ if __name__ == "__main__":
     unpacked_file_pattern = re.compile("_unpacked(_x64)?$")
     input_queue = []
     # Find all targets (everything) to disassemble in malpedia.
+    file_index = 0
     for root, subdir, files in sorted(os.walk(malpedia_path)):
         if ".git" in root:
             continue
         for filename in sorted(files):
             if not (re.search(unpacked_file_pattern, filename) or re.search(dump_file_pattern, filename)):
+                continue
+            # TODO remove sampling after experiments
+            file_index += 1
+            if file_index % 10 != 0:
                 continue
             filepath = root + os.sep + filename
             input_element = {
@@ -284,6 +290,7 @@ if __name__ == "__main__":
     for filename in tqdm.tqdm(os.listdir("block-reports")):
         if filename.endswith(".blocks"):
             matcher.load("block-reports" + os.sep + filename)
+    print(json.dumps(matcher.getDbStats(), indent=1, sort_keys=True))
     print("saving DB...")
-    matcher.save_db("db/picblocksdb.json")
+    matcher.saveDb("db/picblocksdb.json")
     print("DONE, shutting down")
