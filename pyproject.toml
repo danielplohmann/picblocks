@@ -35,4 +35,5 @@ target-version = "py38"
 select = ["E", "F", "W", "I", "UP"]
 ignore = ["E501"]
 
-[tool.ty]
+[tool.ty.rules]
+unresolved-import = "ignore"

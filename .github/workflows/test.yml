@@ -28,11 +28,11 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install linter & type checker
+      - name: Install linter, type checker & dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install ruff ty setuptools
-          python -m pip install -e .
+          python -m pip install -e ".[web,dev]"
+          python -m pip install mcrit
 
       - name: Run ruff check
         run: ruff check .
