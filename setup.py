@@ -5,12 +5,12 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 
-requirements = ["smda"]
+requirements = ["smda>=4.2.13"]
 
 
 setup(
     name='picblocks',
-    version='2.0.1',
+    version='2.0.2',
     description='A library for code similarity estimation using PIC hashing over basic blocks.',
     long_description_content_type="text/markdown",
     long_description=long_description,
@@ -27,10 +27,12 @@ setup(
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Topic :: Security",
         "Topic :: Software Development :: Disassemblers",
     ],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
 )

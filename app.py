@@ -3,6 +3,7 @@ import os
 import time
 import logging
 import hashlib
+from html import escape
 
 from waitress import serve
 from werkzeug.utils import secure_filename
@@ -61,7 +62,8 @@ def render_report(report, template):
         green = "gd" if alternate % 2 == 0 else "gl"
         if entry['uniq_bytes'] > 0 or index < 20:
             style20 = " style='border-bottom: 2px solid black;'" if index == 19 else ""
-            malpedia_link = f"<a href='https://malpedia.caad.fkie.fraunhofer.de/details/"+ entry['family'] +"' target='_blank'>"+str(entry['family'])+"</a>"
+            family_name = escape(str(entry['family']))
+            malpedia_link = f"<a href='https://malpedia.caad.fkie.fraunhofer.de/details/"+ family_name +"' target='_blank'>"+family_name+"</a>"
             #TODO: just improve this durity and rep. code
             _a = f"{entry['index']:>5,d}"
             _b = f"{entry['direct_bytes']:,d}"
@@ -92,7 +94,17 @@ def render_report(report, template):
     output += "libraries excluded: filter out blocks known from a set of 3rd party libraries, including MSVC.<br />"
     output += "frequency adjusted: for the remainder, block scores are increasingly penalized when occurring in three or more families.<br />"
     output += "uniquely matched: Block score for blocks only found in this family.</p>"
-    return render_template(template, file_name=file_name, sha256=sha256, bitness=bitness, extracted=extracted, unmatched=unmatched, unmatch_sc=unmatch_sc, out_html=output)
+    return render_template(
+        template,
+        file_name=file_name,
+        sha256=sha256,
+        bitness=bitness,
+        extracted=extracted,
+        block_b=block_b,
+        unmatched=unmatched,
+        unmatch_sc=unmatch_sc,
+        out_html=output,
+    )
 
 
 @app.route("/")
@@ -124,12 +136,24 @@ def get_stats():
     if request.method == 'GET':
         stats = []
         if USE_DB and db:
-            f_c = f_to_id.find({}).count()
-            s_c = s_to_s.find({}).count()
-            b_c = blocks.find({}).count()
+            f_c = f_to_id.count_documents({})
+            s_c = s_to_s.count_documents({})
+            b_c = blocks.count_documents({})
             cursor = s_s.find({})
-            stats = list(cursor)
-            return render_template('stats.html', db_online ="online", tracked_families=f_c, number_samples=s_c, number_blocks=b_c, s_stats=stats)
+            stats = []
+            for doc in cursor:
+                item = dict(doc)
+                if "_id" in item:
+                    item["_id"] = str(item["_id"])
+                stats.append(item)
+            return render_template(
+                'stats.html',
+                db_online="online",
+                tracked_families=f_c,
+                number_samples=s_c,
+                number_blocks=b_c,
+                s_stats=stats,
+            )
         else:
             return render_template('disabled.html')
 

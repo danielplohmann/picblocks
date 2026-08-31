@@ -1,7 +1,5 @@
-from fileinput import filelineno
 import os
 import re
-import sys
 import sys
 import json
 import struct
@@ -15,6 +13,10 @@ from smda.Disassembler import Disassembler
 
 from picblocks.blockhasher import BlockHasher
 from picblocks.blockhashmatcher import BlockHashMatcher
+
+dump_file_pattern = re.compile("dump7?_0x[0-9a-fA-F]{8,16}")
+unpacked_file_pattern = re.compile("_unpacked(_x64)?$")
+logger = logging.getLogger("smda-multithreaded")
 
 
 
@@ -38,14 +40,14 @@ def _get_binary_data(buffer, start, length):
 
 
 _unsigned_unpack_formats = {
-    2: "H",
-    4: "I",
-    8: "Q"
+    2: "<H",
+    4: "<I",
+    8: "<Q"
 }
 
 def get_pe_offset(content):
     if len(content) >= 0x40:
-        pe_offset = get_word(content, 0x3c)
+        pe_offset = get_dword(content, 0x3c)
         return pe_offset
     raise RuntimeError("Buffer too small to extract PE offset (< 0x40)")
 
@@ -99,7 +101,7 @@ class NativeCodeIdentifier(object):
         return False
 
     def _identifyPython(self, content):
-        if re.search(b"python(2|3).\\.dll", content):
+        if re.search(br"python(2|3)\d?\.dll", content):
             return True
         return False
 
@@ -257,20 +259,13 @@ if __name__ == "__main__":
         sys.exit(1)
     malpedia_path = sys.argv[1]
     finished_reports = getAllReportFilenames("block-reports")
-    dump_file_pattern = re.compile("dump7?_0x[0-9a-fA-F]{8,16}")
-    unpacked_file_pattern = re.compile("_unpacked(_x64)?$")
     input_queue = []
     # Find all targets (everything) to disassemble in malpedia.
-    file_index = 0
     for root, subdir, files in sorted(os.walk(malpedia_path)):
         if ".git" in root:
             continue
         for filename in sorted(files):
             if not (re.search(unpacked_file_pattern, filename) or re.search(dump_file_pattern, filename)):
-                continue
-            # TODO remove sampling after experiments
-            file_index += 1
-            if file_index % 10 != 0:
                 continue
             filepath = root + os.sep + filename
             input_element = {
@@ -282,7 +277,8 @@ if __name__ == "__main__":
             input_queue.append(input_element)
     results = []
     # Use Pooling for parallel processing
-    with Pool(cpu_count() - 2) as pool:
+    workers = max(1, (cpu_count() or 1) - 2)
+    with Pool(workers) as pool:
         for result in tqdm.tqdm(pool.imap_unordered(work, input_queue), total=len(input_queue)):
             results.append(result)
     print("Produced all block reports, now aggregating a DB...")
