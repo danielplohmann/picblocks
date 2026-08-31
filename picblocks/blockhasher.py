@@ -17,10 +17,9 @@ LOG = logging.getLogger(__name__)
 
 # Memory dumps named like Malpedia's dump/dump7_0x<base> files, never a path
 # segment such as /data/dumps/malware.exe.
-_DUMP_FILENAME_RE = re.compile(r"(?:^|[^A-Za-z0-9])dump(?:7)?_0x[0-9a-fA-F]{8,16}", re.I)
-_HEX_BASE_RE = re.compile(r"0x(?P<base_addr>[0-9a-fA-F]{8,16})")
-_LOOSE_HEX_BASE_RE = re.compile(r"0x(?P<base_addr>[0-9a-fA-F]{5,16})")
-_ARCH_RE = re.compile(r"(?P<bitness>(x32|x64))")
+_DUMP_FILENAME_RE = re.compile(r"(?:^|[^A-Za-z0-9])dump(?:7)?_0x[0-9a-fA-F]{4,16}", re.I)
+_HEX_BASE_RE = re.compile(r"0x(?P<base_addr>[0-9a-fA-F]{1,16})", re.I)
+_ARCH_RE = re.compile(r"(?P<bitness>(x86_64|x86-64|x86_32|x86|x64|x32|amd64|i386|i686|win32|win64|32bit|64bit))", re.I)
 
 
 class BlockHasher(object):
@@ -30,12 +29,13 @@ class BlockHasher(object):
         name = os.path.basename(filepath)
         baddr_match = _HEX_BASE_RE.search(name)
         if baddr_match:
-            parsed_bitness = 32 if len(baddr_match.group("base_addr")) == 8 else 64
+            parsed_bitness = 32 if len(baddr_match.group("base_addr")) <= 8 else 64
             LOG.info("Parsed bitness from file name: %d", parsed_bitness)
             return parsed_bitness
         architecture_match = _ARCH_RE.search(name)
         if architecture_match:
-            parsed_bitness = 32 if "x32" in architecture_match.group("bitness") else 64
+            tag = architecture_match.group("bitness").lower()
+            parsed_bitness = 64 if any(k in tag for k in ("64", "amd64")) else 32
             LOG.info("Parsed bitness from file name: %d", parsed_bitness)
             return parsed_bitness
         LOG.warning("No bitness recognized from file name.")
@@ -44,7 +44,7 @@ class BlockHasher(object):
     def parseBaseAddrFromFilename(self, filepath):
         # try to infer base addr from filename, in case we process a mapped image / memory dump
         name = os.path.basename(filepath)
-        baddr_match = _LOOSE_HEX_BASE_RE.search(name)
+        baddr_match = _HEX_BASE_RE.search(name)
         if baddr_match:
             parsed_base_addr = int(baddr_match.group("base_addr"), 16)
             LOG.info("Parsed base address from file name: 0x%08x %d", parsed_base_addr, parsed_base_addr)
@@ -97,8 +97,8 @@ class BlockHasher(object):
                         return resolved
             getter = getattr(type(smda_function), "getInstructionEscaper", None)
             if callable(getter):
-                architecture = None
-                if report is not None:
+                architecture = getattr(smda_function, "architecture", None)
+                if architecture is None and report is not None:
                     architecture = getattr(report, "architecture", None)
                 try:
                     resolved = getter(architecture)
@@ -150,12 +150,14 @@ class BlockHasher(object):
         escaper = self._getInstructionEscaper(block)
         escaped_binary_seq = []
         for instruction in block.getInstructions():
-            escaped_binary_seq.append(instruction.getEscapedBinary(
+            escaped = instruction.getEscapedBinary(
                 escaper,
                 escape_intraprocedural_jumps=True,
                 lower_addr=lower_addr,
                 upper_addr=upper_addr,
-            ))
+            )
+            if escaped:
+                escaped_binary_seq.append(escaped)
         as_bytes = "".join(escaped_binary_seq).encode("ascii")
         digest = hashlib.sha256(as_bytes).digest()
         if hash_size == 8:

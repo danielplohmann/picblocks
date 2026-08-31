@@ -38,3 +38,9 @@ def test_readme_and_makefile_use_picblocks_package():
     requirements = open(os.path.join(root, "requirements.txt"), encoding="utf-8").read()
     assert "smda>=4.2.13" in requirements
     assert "smda==1.12.7" not in requirements
+
+
+def test_import_db_missing_file_returns_false(tmp_path):
+    from utils.import_picblocksdb_to_mongo import import_db
+
+    assert import_db(db_path=str(tmp_path / "nonexistent.json")) is False

@@ -52,8 +52,9 @@ class BlockHashMatcher(object):
                 self.family_id_to_family[family_id] = family
             family_id = self.family_to_id[family]
             sample_id = len(self.sample_id_to_sample)
-            self.sample_id_to_sample[sample_id] = blockhash_report["filename"]
-            for blockhash, data in blockhash_report["blockhashes"].items():
+            filename = blockhash_report.get("filename") or os.path.basename(filepath)
+            self.sample_id_to_sample[sample_id] = filename
+            for blockhash, data in (blockhash_report.get("blockhashes") or {}).items():
                 int_hash = int(blockhash)
                 if int_hash not in self.blockhashes:
                     self.blockhashes[int_hash] = {}
@@ -77,6 +78,9 @@ class BlockHashMatcher(object):
 
     def saveDb(self, filepath):
         """ save the current database of blockhashes """
+        parent_dir = os.path.dirname(filepath)
+        if parent_dir:
+            os.makedirs(parent_dir, exist_ok=True)
         with open(filepath, "w") as fout:
             json_db = {
                 "timestamp": _utc_timestamp(),

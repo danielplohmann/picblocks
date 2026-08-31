@@ -4,7 +4,12 @@ import os
 from pathlib import Path
 
 import pytest
-import requests
+
+try:
+    import requests
+except ImportError:
+    requests = None
+
 from smda.Disassembler import Disassembler
 from smda.intel.IntelInstructionEscaper import IntelInstructionEscaper
 
@@ -35,15 +40,18 @@ def _decode_xored(path):
 
 
 def _mcrit_up():
+    if requests is None:
+        return False
     try:
         response = requests.get(f"{MCRIT_URL}/status", timeout=2)
         return response.status_code == 200
-    except requests.RequestException:
+    except Exception:
         return False
 
 
 pytestmark = [
     pytest.mark.live_mcrit,
+    pytest.mark.skipif(requests is None, reason="requests is not installed"),
     pytest.mark.skipif(not _mcrit_up(), reason="mcrit server is not running on %s" % MCRIT_URL),
     pytest.mark.skipif(
         SMDA_TESTS is None,

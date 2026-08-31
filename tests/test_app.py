@@ -193,3 +193,54 @@ def test_stats_template_uses_injected_data_not_fixture():
     assert "win.foo" in html
     assert "Tracked Families" in html
     assert ">2<" in html
+
+
+def test_blocks_get_returns_index(client):
+    response = client.get("/blocks")
+    assert response.status_code == 200
+    assert "Malpedia BlocksDB" in response.get_data(as_text=True)
+
+
+def test_blocks_post_empty_or_missing_file_returns_index(client):
+    res1 = client.post("/blocks", data={}, content_type="multipart/form-data")
+    assert res1.status_code == 200
+    res2 = client.post("/blocks", data={"binary": (BytesIO(b""), "")}, content_type="multipart/form-data")
+    assert res2.status_code == 200
+
+
+def test_api_blocks_empty_payload_returns_400(client):
+    response = client.post("/api/blocks", data=b"")
+    assert response.status_code == 400
+    assert response.get_json()["error"] == "Empty or missing request payload"
+
+
+def test_api_blocks_accepts_query_parameters(monkeypatch, client):
+    captured = {}
+
+    def fake_process(self, buffer, filename, bitness=None, baseaddress=None):
+        captured["filename"] = filename
+        captured["bitness"] = bitness
+        captured["baseaddress"] = baseaddress
+        return _empty_blockhash_report(filename, bitness)
+
+    monkeypatch.setattr("app.BlockHasher.processBuffer", fake_process)
+    response = client.post(
+        "/api/blocks?bitness=64&baseaddress=0x140000000&filename=sample.bin",
+        data=b"MZ\x00\x00",
+    )
+    assert response.status_code == 200
+    assert captured["filename"] == "sample.bin"
+    assert captured["bitness"] == 64
+    assert captured["baseaddress"] == 0x140000000
+
+
+def test_stats_route_uses_stats_json_fallback(tmp_path, monkeypatch, client):
+    stats_file = tmp_path / "stats.json"
+    stats_file.write_text('{"family_verified_frequency": {"win.test": 1}, "family_verified_vs_detected": {}}')
+    monkeypatch.setattr("os.path.exists", lambda p: True if p == "db/stats.json" else False)
+    monkeypatch.setattr("builtins.open", lambda p, *args, **kwargs: stats_file.open("r") if p == "db/stats.json" else open(p, *args, **kwargs))
+    response = client.get("/stats")
+    assert response.status_code == 200
+    html = response.get_data(as_text=True)
+    assert "offline (cached)" in html
+

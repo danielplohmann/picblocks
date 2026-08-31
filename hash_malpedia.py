@@ -14,8 +14,8 @@ from smda.Disassembler import Disassembler
 from picblocks.blockhasher import BlockHasher
 from picblocks.blockhashmatcher import BlockHashMatcher
 
-dump_file_pattern = re.compile("dump7?_0x[0-9a-fA-F]{8,16}")
-unpacked_file_pattern = re.compile("_unpacked(_x64)?$")
+dump_file_pattern = re.compile(r"dump7?_0x[0-9a-fA-F]{4,16}", re.I)
+unpacked_file_pattern = re.compile(r"_unpacked(_x64)?$", re.I)
 logger = logging.getLogger("smda-multithreaded")
 
 
@@ -101,7 +101,7 @@ class NativeCodeIdentifier(object):
         return False
 
     def _identifyPython(self, content):
-        if re.search(br"python(2|3)\d?\.dll", content):
+        if re.search(br"python(2|3)?\d*\.dll", content, re.I):
             return True
         return False
 
@@ -127,17 +127,12 @@ class NativeCodeIdentifier(object):
 
 
 def parseBaseAddrFromArgs(filename):
-    baddr_match = re.search(re.compile("0x(?P<base_addr>[0-9a-fA-F]{8,16})"), filename)
-    if baddr_match:
-        return int(baddr_match.group("base_addr"), 16)
-    return 0
+    return BlockHasher().parseBaseAddrFromFilename(filename)
 
 
 def getBitnessFromFilename(filename):
-    baddr_match = re.search(re.compile("0x(?P<base_addr>[0-9a-fA-F]{8,16})"), filename)
-    if baddr_match:
-        return 32 if len(baddr_match.group("base_addr")) == 8 else 64
-    return 0
+    bitness = BlockHasher().parseBitnessFromFilename(filename)
+    return bitness if bitness is not None else 0
 
 
 def readFileContent(file_path):
@@ -158,7 +153,8 @@ def getAllReportFilenames(output_path):
 def getFamilyName(input_path):
     family_name = ""
     abs_path = os.path.abspath(input_path)
-    for folder in abs_path.split("/")[::-1]:
+    folders = [f for f in re.split(r"[\\/]", abs_path) if f]
+    for folder in reversed(folders):
         if folder == "malpedia":
             break
         family_name = folder
@@ -168,7 +164,8 @@ def getFamilyName(input_path):
 def getSampleVersion(input_path, family):
     sample_version = ""
     abs_path = os.path.dirname(os.path.abspath(input_path))
-    for folder in abs_path.split("/")[::-1]:
+    folders = [f for f in re.split(r"[\\/]", abs_path) if f]
+    for folder in reversed(folders):
         if folder == family or folder == "modules":
             break
         sample_version = folder
@@ -176,11 +173,13 @@ def getSampleVersion(input_path, family):
 
 
 def getMalpediaFilePath(input_path):
-    egg = 'malpedia/'
     abs_path = os.path.abspath(input_path)
-    pos = abs_path.index(egg)
-    malpedia_filepath = abs_path[pos + len(egg):]
-    return malpedia_filepath
+    for sep in (os.sep, "/", "\\"):
+        egg = "malpedia" + sep
+        if egg in abs_path:
+            pos = abs_path.index(egg)
+            return abs_path[pos + len(egg):]
+    return os.path.basename(abs_path)
 
 
 def work(input_element):
@@ -227,6 +226,7 @@ def work(input_element):
             REPORT.version = getSampleVersion(INPUT_FILEPATH, REPORT.family)
             REPORT.filename = os.path.basename(malpedia_relative_path)
             blockhash_report = hasher.processSmda(REPORT)
+            os.makedirs("block-reports", exist_ok=True)
             with open("block-reports/" + INPUT_FILENAME + ".blocks", "w") as fout:
                 json.dump(blockhash_report, fout, indent=1, sort_keys=True)
                 logger.info("Wrote " + "block-reports/" + INPUT_FILENAME + ".blocks")

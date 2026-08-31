@@ -187,10 +187,40 @@ def test_process_file_does_not_treat_0x_pe_name_as_dump(monkeypatch, tmp_path):
 
 def test_parse_bitness_from_unanchored_dump_name():
     hasher = BlockHasher()
+    assert hasher.parseBitnessFromFilename("dump_0x400000.bin") == 32
     assert hasher.parseBitnessFromFilename("dump_0x10000000.bin") == 32
+    assert hasher.parseBitnessFromFilename("dump_0x140000000.bin") == 64
     assert hasher.parseBitnessFromFilename("dump_0x0000000140000000.bin") == 64
     assert hasher.parseBitnessFromFilename("sample_x64.exe") == 64
+    assert hasher.parseBitnessFromFilename("sample_x86.bin") == 32
+    assert hasher.parseBitnessFromFilename("sample_i386.bin") == 32
+    assert hasher.parseBitnessFromFilename("sample_amd64.bin") == 64
+    assert hasher.parseBitnessFromFilename("sample_win32.exe") == 32
+    assert hasher.parseBitnessFromFilename("sample_win64.exe") == 64
     assert hasher.parseBitnessFromFilename("plain.exe") is None
+
+
+def test_dump_filename_detection_supports_short_hex_base():
+    hasher = BlockHasher()
+    assert hasher._isMappedDumpFilename("dump_0x400000") is True
+    assert hasher._isMappedDumpFilename("dump7_0x400000") is True
+    assert hasher.parseBaseAddrFromFilename("dump_0x400000") == 0x400000
+
+
+def test_escaper_resolution_for_cil_and_dalvik():
+    from smda.cil.CilInstructionEscaper import CilInstructionEscaper
+    from smda.dalvik.DalvikInstructionEscaper import DalvikInstructionEscaper
+
+    hasher = BlockHasher()
+    cil_block = FakeBlock([FakeInstruction("00")] * 4)
+    cil_func = FakeFunction([cil_block], architecture="cil")
+    FakeReport([cil_func], architecture="cil")
+    assert hasher._getInstructionEscaper(cil_block) == CilInstructionEscaper
+
+    dalvik_block = FakeBlock([FakeInstruction("00")] * 4)
+    dalvik_func = FakeFunction([dalvik_block], architecture="dalvik")
+    FakeReport([dalvik_func], architecture="dalvik")
+    assert hasher._getInstructionEscaper(dalvik_block) == DalvikInstructionEscaper
 
 
 def test_extract_blockhashes_on_real_smda_error_status():
@@ -224,3 +254,4 @@ def test_real_smda_file_hashing_if_system_binary_exists():
     assert output["num_functions_hashed"] <= output["num_blocks"]
     if output["num_blocks"]:
         assert output["block_bytes"] > 0
+

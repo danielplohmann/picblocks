@@ -105,3 +105,20 @@ def test_none_family_does_not_split_across_json_roundtrip(tmp_path):
     reloaded.load(str(extra))
     assert set(reloaded.family_to_id.keys()) == {""}
     assert len(reloaded.family_id_to_family) == 1
+
+
+def test_save_db_creates_nested_parent_directory(tmp_path):
+    matcher = BlockHashMatcher()
+    nested_path = tmp_path / "deeply" / "nested" / "dir" / "db.json"
+    matcher.saveDb(str(nested_path))
+    assert nested_path.is_file()
+
+
+def test_load_handles_missing_filename_and_empty_blockhashes(tmp_path):
+    matcher = BlockHashMatcher()
+    path = tmp_path / "sample_without_filename.blocks"
+    path.write_text(json.dumps({"family": "win.test"}))
+    matcher.load(str(path))
+    assert 0 in matcher.sample_id_to_sample
+    assert matcher.sample_id_to_sample[0] == "sample_without_filename.blocks"
+

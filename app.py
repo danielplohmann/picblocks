@@ -1,6 +1,7 @@
 import re
 import os
 import time
+import json
 import logging
 import hashlib
 from html import escape
@@ -133,42 +134,64 @@ def about():
 @app.route('/stats', methods=['GET'])
 def get_stats():
     LOG.info("request to /stats")
-    if request.method == 'GET':
+    if USE_DB and db:
+        f_c = f_to_id.count_documents({})
+        s_c = s_to_s.count_documents({})
+        b_c = blocks.count_documents({})
+        cursor = s_s.find({})
         stats = []
-        if USE_DB and db:
-            f_c = f_to_id.count_documents({})
-            s_c = s_to_s.count_documents({})
-            b_c = blocks.count_documents({})
-            cursor = s_s.find({})
-            stats = []
-            for doc in cursor:
-                item = dict(doc)
-                if "_id" in item:
-                    item["_id"] = str(item["_id"])
-                stats.append(item)
+        for doc in cursor:
+            item = dict(doc)
+            if "_id" in item:
+                item["_id"] = str(item["_id"])
+            stats.append(item)
+        return render_template(
+            'stats.html',
+            db_online="online",
+            tracked_families=f_c,
+            number_samples=s_c,
+            number_blocks=b_c,
+            s_stats=stats,
+        )
+    if os.path.exists("db/stats.json"):
+        try:
+            with open("db/stats.json", "r", encoding="utf-8") as fin:
+                local_stats = json.load(fin)
+            stats = [local_stats] if isinstance(local_stats, dict) else local_stats
+            db_stats = matcher.getDbStats()
             return render_template(
                 'stats.html',
-                db_online="online",
-                tracked_families=f_c,
-                number_samples=s_c,
-                number_blocks=b_c,
+                db_online="offline (cached)",
+                tracked_families=db_stats["num_families"],
+                number_samples=db_stats["num_files"],
+                number_blocks=db_stats["num_hashes"],
                 s_stats=stats,
             )
-        else:
-            return render_template('disabled.html')
+        except Exception:
+            LOG.exception("Failed to load db/stats.json")
+    return render_template('disabled.html')
 
 
 @app.route('/blocks', methods=['GET', 'POST'])
 def upload_file():
     LOG.info("request to /blocks")
+    if request.method == 'GET':
+        return render_template('index.html', db_timestamp=matcher.db_timestamp)
     if request.method == 'POST':
+        if 'binary' not in request.files:
+            return render_template('index.html', db_timestamp=matcher.db_timestamp)
         f = request.files['binary']
+        if not f or not f.filename:
+            return render_template('index.html', db_timestamp=matcher.db_timestamp)
         binary = f.read()
+        if not binary:
+            return render_template('index.html', db_timestamp=matcher.db_timestamp)
         LOG.info(f"received binary with sha256: {hashlib.sha256(binary).hexdigest()}")
         form_bitness = int(request.form["bitness"]) if ("bitness" in request.form and request.form["bitness"] in ["32", "64"]) else None
         form_baseaddress = int(request.form["baseaddress"], 16) if ("baseaddress" in request.form and re.match("^0x[0-9a-fA-F]{1,16}$", request.form["baseaddress"])) else None
         hasher = BlockHasher()
-        blockhash_report = hasher.processBuffer(binary, secure_filename(f.filename), bitness=form_bitness, baseaddress=form_baseaddress)
+        filename = secure_filename(f.filename) or "payload.bin"
+        blockhash_report = hasher.processBuffer(binary, filename, bitness=form_bitness, baseaddress=form_baseaddress)
         report = matcher.match(blockhash_report)
         LOG.info("matching completed.")
         return render_report(report, "report.html")
@@ -177,14 +200,22 @@ def upload_file():
 @app.route('/api/blocks', methods=['POST'])
 def upload_api_file():
     LOG.info("request to /api/blocks")
-    if request.method == 'POST':
-        binary = request.stream.read()
-        LOG.info(f"received binary with sha256: {hashlib.sha256(binary).hexdigest()}")
-        hasher = BlockHasher()
-        blockhash_report = hasher.processBuffer(binary, f"sha256:{hashlib.sha256(binary).hexdigest()}")
-        report = matcher.match(blockhash_report)
-        LOG.info("matching completed.")
-        return jsonify(report)
+    binary = request.get_data() or request.stream.read()
+    if not binary:
+        return jsonify({"error": "Empty or missing request payload"}), 400
+    LOG.info(f"received binary with sha256: {hashlib.sha256(binary).hexdigest()}")
+    filename = request.headers.get("X-Filename") or request.args.get("filename") or f"sha256:{hashlib.sha256(binary).hexdigest()}"
+    req_bitness = request.args.get("bitness") or request.headers.get("X-Bitness")
+    bitness = int(req_bitness) if req_bitness in ("32", "64") else None
+    req_base = request.args.get("baseaddress") or request.headers.get("X-BaseAddress")
+    baseaddress = None
+    if req_base and re.match(r"^0x[0-9a-fA-F]{1,16}$", req_base):
+        baseaddress = int(req_base, 16)
+    hasher = BlockHasher()
+    blockhash_report = hasher.processBuffer(binary, filename, bitness=bitness, baseaddress=baseaddress)
+    report = matcher.match(blockhash_report)
+    LOG.info("matching completed.")
+    return jsonify(report)
 
 
 if __name__ == '__main__':

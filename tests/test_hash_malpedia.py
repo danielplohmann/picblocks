@@ -13,11 +13,15 @@ def test_python_identifier_matches_python3_dll():
     identifier = NativeCodeIdentifier()
     assert identifier._identifyPython(b"xxxxpython3.dllxxxx") is True
     assert identifier._identifyPython(b"xxxxpython39.dllxxxx") is True
+    assert identifier._identifyPython(b"xxxxpython310.dllxxxx") is True
+    assert identifier._identifyPython(b"xxxxpython311.dllxxxx") is True
+    assert identifier._identifyPython(b"xxxxpython312.dllxxxx") is True
     assert identifier._identifyPython(b"xxxxpython27.dllxxxx") is True
     assert identifier._identifyPython(b"xxxxnotpythonxxxx") is False
 
 
 def test_malpedia_filename_patterns():
+    assert dump_file_pattern.search("dump_0x400000")
     assert dump_file_pattern.search("dump_0x10000000")
     assert dump_file_pattern.search("dump7_0x00400000")
     assert unpacked_file_pattern.search("sample_unpacked")
@@ -32,3 +36,13 @@ def test_pool_worker_count_is_at_least_one():
     assert imported_cpu_count is cpu_count
     workers = max(1, (cpu_count() or 1) - 2)
     assert workers >= 1
+
+
+def test_malpedia_path_helpers():
+    from hash_malpedia import getFamilyName, getSampleVersion, getMalpediaFilePath
+
+    path = "/data/malpedia/win.emotet/v1.0/sample_unpacked"
+    assert getFamilyName(path) == "win.emotet"
+    assert getSampleVersion(path, "win.emotet") == "v1.0"
+    assert getMalpediaFilePath(path) == "win.emotet/v1.0/sample_unpacked"
+
