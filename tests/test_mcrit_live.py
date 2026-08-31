@@ -1,4 +1,5 @@
 """Live mcrit integration: SMDA fixtures through a running Mongo-backed instance."""
+
 import hashlib
 import os
 from pathlib import Path
@@ -14,6 +15,7 @@ from smda.Disassembler import Disassembler
 from smda.intel.IntelInstructionEscaper import IntelInstructionEscaper
 
 from picblocks.blockhasher import BlockHasher
+
 
 def _smda_tests_dir():
     env = os.environ.get("SMDA_TESTS")
@@ -52,7 +54,7 @@ def _mcrit_up():
 pytestmark = [
     pytest.mark.live_mcrit,
     pytest.mark.skipif(requests is None, reason="requests is not installed"),
-    pytest.mark.skipif(not _mcrit_up(), reason="mcrit server is not running on %s" % MCRIT_URL),
+    pytest.mark.skipif(not _mcrit_up(), reason=f"mcrit server is not running on {MCRIT_URL}"),
     pytest.mark.skipif(
         SMDA_TESTS is None,
         reason="SMDA test fixtures not found (set SMDA_TESTS to smda/tests)",
@@ -82,11 +84,12 @@ def _submit_report(smda_report, family, filename):
     client = McritClient(mcrit_server=MCRIT_URL)
     result = client.addReport(smda_report)
     assert result is not None
-    sample_entry, job_id = result
+    sample_entry, _job_id = result
     return sample_entry
 
 
 def test_mcrit_status_is_mongodb_backed():
+    assert requests is not None
     payload = requests.get(f"{MCRIT_URL}/status", timeout=5).json()
     assert payload["status"] == "successful"
     assert payload["data"]["status"]["storage_type"] == "mongodb"
@@ -163,7 +166,7 @@ def test_worker_indexes_bashlite_binary_and_stores_blockhashes():
     if sample is None:
         job = client.addBinarySample(buffer, filename="bashlite.elf", family="elf.bashlite")
         assert job is not None
-        job_id = job if isinstance(job, str) else job.get("job_id", job)
+        job_id = job if isinstance(job, str) else (job.get("job_id") if isinstance(job, dict) else str(job))
         assert isinstance(job_id, str)
         result = client.awaitResult(job_id)
         assert result is not None

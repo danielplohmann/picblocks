@@ -1,4 +1,4 @@
-class FakeInstruction(object):
+class FakeInstruction:
     def __init__(self, hex_bytes, escaped=None):
         self.bytes = hex_bytes
         self.escaped = escaped if escaped is not None else hex_bytes
@@ -9,7 +9,7 @@ class FakeInstruction(object):
         return self.escaped
 
 
-class FakeBlock(object):
+class FakeBlock:
     def __init__(self, instructions, offset=0):
         self.instructions = instructions
         self.length = len(instructions)
@@ -20,7 +20,7 @@ class FakeBlock(object):
         return self.instructions
 
 
-class FakeFunction(object):
+class FakeFunction:
     def __init__(self, blocks, offset=0, architecture="intel", escaper=None, report=None):
         self.blocks = blocks
         self.offset = offset
@@ -36,10 +36,11 @@ class FakeFunction(object):
     @staticmethod
     def getInstructionEscaper(architecture):
         from smda.common.SmdaFunction import SmdaFunction
+
         return SmdaFunction.getInstructionEscaper(architecture)
 
 
-class FakeReport(object):
+class FakeReport:
     def __init__(self, functions=None, **kwargs):
         self.functions = functions or []
         self.family = kwargs.get("family", "win.test")
@@ -67,6 +68,7 @@ class FakeReport(object):
 
     def getInstructionEscaper(self):
         from smda.common.SmdaFunction import SmdaFunction
+
         return SmdaFunction.getInstructionEscaper(self.architecture)
 
 
@@ -74,16 +76,13 @@ def make_function(num_blocks, instructions_per_block=4, hex_bytes="90", offset=0
     blocks = []
     cursor = offset
     for _ in range(num_blocks):
-        instructions = [
-            FakeInstruction(hex_bytes, escaped=escaped)
-            for _ in range(instructions_per_block)
-        ]
+        instructions = [FakeInstruction(hex_bytes, escaped=escaped) for _ in range(instructions_per_block)]
         blocks.append(FakeBlock(instructions, offset=cursor))
         cursor += instructions_per_block
     return FakeFunction(blocks, offset=offset)
 
 
-class RecordingDisassembler(object):
+class RecordingDisassembler:
     def __init__(self, report_factory):
         self.report_factory = report_factory
         self.calls = []

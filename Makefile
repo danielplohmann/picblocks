@@ -7,6 +7,10 @@ publish:
 	python3 -m twine upload dist/*
 pylint:
 	python3 -m pylint --rcfile=.pylintrc picblocks
+lint:
+	ruff check .
+	ruff format --check .
+	ty check .
 test:
 	python3 -m pytest tests
 test-coverage:

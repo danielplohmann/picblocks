@@ -69,8 +69,8 @@ def test_unmatched_hashes_and_size_miss_are_counted():
         "win.query",
         "query.bin",
         {
-            1: {8: [0, 1]},   # hash hit, size miss
-            99: {16: [2]},    # hash miss
+            1: {8: [0, 1]},  # hash hit, size miss
+            99: {16: [2]},  # hash miss
         },
         block_bytes=40,
     )
@@ -92,8 +92,8 @@ def test_empty_block_bytes_does_not_divide_by_zero():
 def test_none_family_does_not_split_across_json_roundtrip(tmp_path):
     matcher = BlockHashMatcher()
     for index in range(2):
-        path = tmp_path / ("sample%d.blocks" % index)
-        path.write_text(json.dumps(_report(None, "s%d.bin" % index, {"1": {"4": [0]}}, 4)))
+        path = tmp_path / f"sample{index}.blocks"
+        path.write_text(json.dumps(_report(None, f"s{index}.bin", {"1": {"4": [0]}}, 4)))
         matcher.load(str(path))
     assert matcher.family_to_id == {"": 0}
     db_path = tmp_path / "db.json"
@@ -121,4 +121,3 @@ def test_load_handles_missing_filename_and_empty_blockhashes(tmp_path):
     matcher.load(str(path))
     assert 0 in matcher.sample_id_to_sample
     assert matcher.sample_id_to_sample[0] == "sample_without_filename.blocks"
-

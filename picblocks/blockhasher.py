@@ -1,17 +1,17 @@
+import hashlib
+import json
+import logging
 import os
 import re
-import sys
-import json
 import struct
-import hashlib
-import logging
+import sys
 
-from smda.Disassembler import Disassembler
 from smda.common.SmdaReport import SmdaFunction
+from smda.Disassembler import Disassembler
 from smda.intel.IntelInstructionEscaper import IntelInstructionEscaper
 
 # Only do basicConfig if no handlers have been configured
-if len(logging._handlerList) == 0:
+if not logging.root.handlers:
     logging.basicConfig(level=logging.INFO, format="%(asctime)-15s %(message)s")
 LOG = logging.getLogger(__name__)
 
@@ -22,8 +22,7 @@ _HEX_BASE_RE = re.compile(r"0x(?P<base_addr>[0-9a-fA-F]{1,16})", re.I)
 _ARCH_RE = re.compile(r"(?P<bitness>(x86_64|x86-64|x86_32|x86|x64|x32|amd64|i386|i686|win32|win64|32bit|64bit))", re.I)
 
 
-class BlockHasher(object):
-
+class BlockHasher:
     def parseBitnessFromFilename(self, filepath):
         # try to infer bitness from filename, in case we process a mapped image / memory dump
         name = os.path.basename(filepath)
@@ -109,7 +108,7 @@ class BlockHasher(object):
         return IntelInstructionEscaper
 
     def processBuffer(self, buffer, filename, bitness=None, baseaddress=None):
-        LOG.info("now analyzing {}".format(filename))
+        LOG.info(f"now analyzing {filename}")
         DISASSEMBLER = Disassembler()
         name = os.path.basename(filename)
         # baseaddress=0 is a valid mapped base and must not be treated as "unset"
@@ -126,7 +125,7 @@ class BlockHasher(object):
         return blockhash_report
 
     def processFile(self, filepath):
-        LOG.info("now analyzing {}".format(filepath))
+        LOG.info(f"now analyzing {filepath}")
         INPUT_FILENAME = os.path.basename(filepath)
         DISASSEMBLER = Disassembler()
         if self._isMappedDumpFilename(filepath):
@@ -164,12 +163,17 @@ class BlockHasher(object):
             return struct.unpack("<Q", digest[:8])[0]
         return struct.unpack("<I", digest[:4])[0]
 
-    def getBlockhashesForFunction(self, smda_function: "SmdaFunction", image_lower: int, image_upper: int, min_block_size=4, hash_size=4):
-        blockhashes = {}
+    def getBlockhashesForFunction(
+        self, smda_function: "SmdaFunction", image_lower: int, image_upper: int, min_block_size=4, hash_size=4
+    ):
+        blockhashes: dict = {}
         for block in smda_function.getBlocks():
-            if block.length >= min_block_size:
-                block_size = sum([len(ins.bytes) // 2 for ins in block.getInstructions()])
-                block_hash = self.calculateBlockhash(block, lower_addr=image_lower, upper_addr=image_upper, hash_size=hash_size)
+            block_len = getattr(block, "length", 0) or 0
+            if block_len >= min_block_size:
+                block_size = sum(len(ins.bytes) // 2 for ins in block.getInstructions() if ins.bytes)
+                block_hash = self.calculateBlockhash(
+                    block, lower_addr=image_lower, upper_addr=image_upper, hash_size=hash_size
+                )
                 offset_tuple = {
                     "offset": block.offset,
                     "length": block.length,
@@ -178,15 +182,13 @@ class BlockHasher(object):
                 if block_hash not in blockhashes:
                     blockhashes[block_hash] = {
                         "hash": block_hash,
-                        "count": 0,
-                        "offset_tuples": [
-                            offset_tuple
-                        ],
-                        "size": block_size
+                        "count": 1,
+                        "offset_tuples": [offset_tuple],
+                        "size": block_size,
                     }
                 else:
                     blockhashes[block_hash]["offset_tuples"].append(offset_tuple)
-                blockhashes[block_hash]["count"] += 1
+                    blockhashes[block_hash]["count"] += 1
         return list(blockhashes.values())
 
     def extractBlockhashes(self, smda_report, min_block_size=4):
@@ -208,7 +210,7 @@ class BlockHasher(object):
             "num_blocks": 0,
             "num_all_blocks": 0,
             "block_bytes": 0,
-            "blockhashes": {}
+            "blockhashes": {},
         }
         if not self._isUsableSmdaReport(smda_report):
             return output

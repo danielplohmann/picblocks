@@ -19,7 +19,7 @@ def test_index_does_not_default_hidden_zero_bitness(client):
     assert 'value="0"' not in html
     assert 'id="bit32"' in html
     assert 'id="bit64"' in html
-    assert 'checked' not in html.split('id="bit32"', 1)[1].split(">", 1)[0]
+    assert "checked" not in html.split('id="bit32"', 1)[1].split(">", 1)[0]
 
 
 def test_report_renders_extracted_byte_count():
@@ -238,9 +238,11 @@ def test_stats_route_uses_stats_json_fallback(tmp_path, monkeypatch, client):
     stats_file = tmp_path / "stats.json"
     stats_file.write_text('{"family_verified_frequency": {"win.test": 1}, "family_verified_vs_detected": {}}')
     monkeypatch.setattr("os.path.exists", lambda p: True if p == "db/stats.json" else False)
-    monkeypatch.setattr("builtins.open", lambda p, *args, **kwargs: stats_file.open("r") if p == "db/stats.json" else open(p, *args, **kwargs))
+    monkeypatch.setattr(
+        "builtins.open",
+        lambda p, *args, **kwargs: stats_file.open("r") if p == "db/stats.json" else open(p, *args, **kwargs),
+    )
     response = client.get("/stats")
     assert response.status_code == 200
     html = response.get_data(as_text=True)
     assert "offline (cached)" in html
-

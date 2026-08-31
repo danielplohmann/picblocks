@@ -31,6 +31,7 @@ def test_malpedia_filename_patterns():
 
 def test_pool_worker_count_is_at_least_one():
     from multiprocessing import cpu_count
+
     from hash_malpedia import cpu_count as imported_cpu_count
 
     assert imported_cpu_count is cpu_count
@@ -39,10 +40,9 @@ def test_pool_worker_count_is_at_least_one():
 
 
 def test_malpedia_path_helpers():
-    from hash_malpedia import getFamilyName, getSampleVersion, getMalpediaFilePath
+    from hash_malpedia import getFamilyName, getMalpediaFilePath, getSampleVersion
 
     path = "/data/malpedia/win.emotet/v1.0/sample_unpacked"
     assert getFamilyName(path) == "win.emotet"
     assert getSampleVersion(path, "win.emotet") == "v1.0"
     assert getMalpediaFilePath(path) == "win.emotet/v1.0/sample_unpacked"
-

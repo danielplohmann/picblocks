@@ -1,6 +1,7 @@
+import json
 import os
 import sys
-import json
+
 from pymongo import MongoClient
 
 
@@ -17,7 +18,7 @@ def import_db(db_path="db/picblocksdb.json", mongo_uri="mongodb://localhost:2701
     blocks = db["blockhashes"]
     s_to_s = db["sample_id_to_sample"]
 
-    with open(db_path, "r", encoding="utf-8") as f:
+    with open(db_path, encoding="utf-8") as f:
         print("[+] Reading database file...")
         f_d = json.load(f)
 

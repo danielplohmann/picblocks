@@ -254,4 +254,3 @@ def test_real_smda_file_hashing_if_system_binary_exists():
     assert output["num_functions_hashed"] <= output["num_blocks"]
     if output["num_blocks"]:
         assert output["block_bytes"] > 0
-
