@@ -31,10 +31,12 @@ def test_readme_and_makefile_use_picblocks_package():
     assert "python -m utils.make_stats" in readme
     assert "python -m utils.make_stats.py" not in readme
     assert "pytest tests" in makefile
-    assert "--rcfile=.pylintrc picblocks" in makefile
+    assert "ruff check ." in makefile
     assert "nose" not in makefile
-    setup = open(os.path.join(root, "setup.py"), encoding="utf-8").read()
-    assert "smda>=4.2.13" in setup
+    # packaging is single-sourced in pyproject.toml; there is no setup.py to drift from it
+    assert not os.path.exists(os.path.join(root, "setup.py"))
+    pyproject = open(os.path.join(root, "pyproject.toml"), encoding="utf-8").read()
+    assert "smda>=4.2.13" in pyproject
     requirements = open(os.path.join(root, "requirements.txt"), encoding="utf-8").read()
     assert "smda>=4.2.13" in requirements
     assert "smda==1.12.7" not in requirements

@@ -2,11 +2,9 @@ init:
 	pip install -r requirements.txt
 package:
 	rm -rf dist/*
-	python3 setup.py sdist
+	python3 -m build
 publish:
 	python3 -m twine upload dist/*
-pylint:
-	python3 -m pylint --rcfile=.pylintrc picblocks
 lint:
 	ruff check .
 	ruff format --check .
