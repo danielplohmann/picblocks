@@ -1,5 +1,5 @@
 init:
-	pip install -r requirements.txt
+	pip install -e ".[web,dev]"
 package:
 	rm -rf dist/*
 	python3 -m build

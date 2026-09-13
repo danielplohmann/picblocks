@@ -37,9 +37,9 @@ def test_readme_and_makefile_use_picblocks_package():
     assert not os.path.exists(os.path.join(root, "setup.py"))
     pyproject = open(os.path.join(root, "pyproject.toml"), encoding="utf-8").read()
     assert "smda>=4.2.13" in pyproject
-    requirements = open(os.path.join(root, "requirements.txt"), encoding="utf-8").read()
-    assert "smda>=4.2.13" in requirements
-    assert "smda==1.12.7" not in requirements
+    # and no requirements.txt either: the last one pinned smda==1.12.7 long after pyproject moved on
+    assert not os.path.exists(os.path.join(root, "requirements.txt"))
+    assert 'pip install -e ".[web,dev]"' in makefile
 
 
 def test_import_db_missing_file_returns_false(tmp_path):

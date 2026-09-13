@@ -7,9 +7,9 @@ name = "picblocks"
 version = "2.1.0"
 description = "A library for code similarity estimation using PIC hashing over basic blocks."
 readme = "README.md"
-# smda 4.4.1 and newer need 3.11; the 4.2/4.3 range still allowed 3.10, so without this
-# floor pip quietly resolves an older smda on 3.10 instead of saying the Python is too old
-requires-python = ">=3.11"
+# The floor the MCRIT ecosystem shares. Without one, pip quietly resolves an older smda on an
+# older Python instead of saying the Python is too old.
+requires-python = ">=3.12"
 license = "BSD-2-Clause"
 license-files = ["LICENSE"]
 authors = [
@@ -19,9 +19,9 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Security",
     "Topic :: Software Development :: Disassemblers",
 ]
@@ -31,6 +31,9 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/danielplohmann/picblocks"
+Repository = "https://github.com/danielplohmann/picblocks"
+Issues = "https://github.com/danielplohmann/picblocks/issues"
+Changelog = "https://github.com/danielplohmann/picblocks/blob/master/CHANGELOG.md"
 
 [project.optional-dependencies]
 web = [
@@ -53,9 +56,16 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["picblocks*"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = [
+    "live_mcrit: needs a running mcrit server and SMDA xored fixtures",
+]
+
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP"]
