@@ -1,16 +1,36 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "picblocks"
-version = "2.0.2"
+version = "2.1.0"
 description = "A library for code similarity estimation using PIC hashing over basic blocks."
 readme = "README.md"
-requires-python = ">=3.8"
+# smda 4.4.1 and newer need 3.11; the 4.2/4.3 range still allowed 3.10, so without this
+# floor pip quietly resolves an older smda on 3.10 instead of saying the Python is too old
+requires-python = ">=3.11"
+license = "BSD-2-Clause"
+license-files = ["LICENSE"]
+authors = [
+    { name = "Daniel Plohmann", email = "daniel.plohmann@mailbox.org" },
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Disassemblers",
+]
 dependencies = [
     "smda>=4.2.13",
 ]
+
+[project.urls]
+Homepage = "https://github.com/danielplohmann/picblocks"
 
 [project.optional-dependencies]
 web = [
@@ -21,15 +41,21 @@ web = [
     "tqdm",
 ]
 dev = [
+    "build",
     "pytest",
     "requests",
     "ruff",
+    "twine",
     "ty",
 ]
 
+# the demo app, its utils and the tests live next to the package and are not part of it
+[tool.setuptools.packages.find]
+include = ["picblocks*"]
+
 [tool.ruff]
 line-length = 120
-target-version = "py38"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP"]

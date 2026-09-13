@@ -21,7 +21,7 @@ LOG = logging.getLogger(__name__)
 
 
 def _utc_timestamp():
-    return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _percent(part, total):

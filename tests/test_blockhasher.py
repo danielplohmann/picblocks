@@ -146,7 +146,8 @@ def test_process_file_uses_buffer_for_malpedia_dump_names(monkeypatch, tmp_path)
     hasher.processFile(str(target))
     assert dummy.calls[0][0] == "buffer"
     assert dummy.calls[0][1] == 0x10000000
-    assert dummy.calls[0][2] == 32
+    # the name fixes where the dump was mapped, not what it was compiled for
+    assert dummy.calls[0][2] is None
 
 
 def test_process_buffer_honors_baseaddress_zero(monkeypatch):
@@ -187,8 +188,9 @@ def test_process_file_does_not_treat_0x_pe_name_as_dump(monkeypatch, tmp_path):
 
 def test_parse_bitness_from_unanchored_dump_name():
     hasher = BlockHasher()
-    assert hasher.parseBitnessFromFilename("dump_0x400000.bin") == 32
-    assert hasher.parseBitnessFromFilename("dump_0x10000000.bin") == 32
+    # a 64bit module can be mapped below 4GB, so a short base address settles nothing
+    assert hasher.parseBitnessFromFilename("dump_0x400000.bin") is None
+    assert hasher.parseBitnessFromFilename("dump_0x10000000.bin") is None
     assert hasher.parseBitnessFromFilename("dump_0x140000000.bin") == 64
     assert hasher.parseBitnessFromFilename("dump_0x0000000140000000.bin") == 64
     assert hasher.parseBitnessFromFilename("sample_x64.exe") == 64
@@ -198,6 +200,17 @@ def test_parse_bitness_from_unanchored_dump_name():
     assert hasher.parseBitnessFromFilename("sample_win32.exe") == 32
     assert hasher.parseBitnessFromFilename("sample_win64.exe") == 64
     assert hasher.parseBitnessFromFilename("plain.exe") is None
+
+
+def test_parse_bitness_ignores_architecture_tags_inside_base_addresses():
+    hasher = BlockHasher()
+    # "0x64000000" contains the literal "x64" and "0x32000000" the literal "x32"
+    assert hasher.parseBitnessFromFilename("dump_0x64000000.bin") is None
+    assert hasher.parseBitnessFromFilename("dump_0x32000000.bin") is None
+    assert hasher.parseBitnessFromFilename("dump7_0x86000000.bin") is None
+    # an explicit tag still wins over a short base address
+    assert hasher.parseBitnessFromFilename("sample_x64_dump_0x400000.bin") == 64
+    assert hasher.parseBitnessFromFilename("sample_win32_dump_0x400000.bin") == 32
 
 
 def test_dump_filename_detection_supports_short_hex_base():

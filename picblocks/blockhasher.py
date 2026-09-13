@@ -25,19 +25,26 @@ _ARCH_RE = re.compile(r"(?P<bitness>(x86_64|x86-64|x86_32|x86|x64|x32|amd64|i386
 class BlockHasher:
     def parseBitnessFromFilename(self, filepath):
         # try to infer bitness from filename, in case we process a mapped image / memory dump
+        # an explicit architecture tag is the only strong signal a file name carries, so it wins
         name = os.path.basename(filepath)
-        baddr_match = _HEX_BASE_RE.search(name)
-        if baddr_match:
-            parsed_bitness = 32 if len(baddr_match.group("base_addr")) <= 8 else 64
-            LOG.info("Parsed bitness from file name: %d", parsed_bitness)
-            return parsed_bitness
-        architecture_match = _ARCH_RE.search(name)
+        # a base address such as 0x64000000 contains the literal "x64", so the address tokens
+        # have to go before the architecture tag is looked for, or every dump mapped at 0x64......
+        # reads as 64bit and every one at 0x32...... as 32bit
+        without_addresses = _HEX_BASE_RE.sub("", name)
+        architecture_match = _ARCH_RE.search(without_addresses)
         if architecture_match:
             tag = architecture_match.group("bitness").lower()
-            parsed_bitness = 64 if any(k in tag for k in ("64", "amd64")) else 32
+            parsed_bitness = 64 if "64" in tag else 32
             LOG.info("Parsed bitness from file name: %d", parsed_bitness)
             return parsed_bitness
-        LOG.warning("No bitness recognized from file name.")
+        # a base address needing more than 8 hex digits cannot be 32bit, so it settles the question.
+        # the reverse does not hold - 64bit modules are regularly mapped below 4GB - and guessing
+        # 32 from a short address overrides SMDA's estimate over the actual code with a weaker one.
+        baddr_match = _HEX_BASE_RE.search(name)
+        if baddr_match and len(baddr_match.group("base_addr").lstrip("0")) > 8:
+            LOG.info("Parsed bitness from file name: %d", 64)
+            return 64
+        LOG.warning("No bitness recognized from file name, leaving detection to SMDA.")
         return None
 
     def parseBaseAddrFromFilename(self, filepath):
