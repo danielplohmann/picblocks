@@ -1,6 +1,0 @@
-smda>=4.2.13
-flask
-werkzeug
-waitress
-tqdm
-pymongo
