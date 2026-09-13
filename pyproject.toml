@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "picblocks"
+version = "2.0.2"
+description = "A library for code similarity estimation using PIC hashing over basic blocks."
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "smda>=4.2.13",
+]
+
+[project.optional-dependencies]
+web = [
+    "flask",
+    "werkzeug",
+    "waitress",
+    "pymongo",
+    "tqdm",
+]
+dev = [
+    "pytest",
+    "requests",
+    "ruff",
+    "ty",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP"]
+ignore = ["E501"]
+
+[tool.ty.rules]
+unresolved-import = "ignore"

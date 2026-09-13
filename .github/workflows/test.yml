@@ -1,0 +1,138 @@
+name: Tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint & Type Check (Ruff & Ty)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out picblocks
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+
+      - name: Install linter, type checker & dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[web,dev]"
+          python -m pip install mcrit
+
+      - name: Run ruff check
+        run: ruff check .
+
+      - name: Run ruff format check
+        run: ruff format --check .
+
+      - name: Run ty type check
+        run: ty check .
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out picblocks
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            setup.py
+            pyproject.toml
+            requirements.txt
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          python -m pip install pytest flask werkzeug waitress tqdm pymongo requests
+
+      - name: Run unit tests
+        run: python -m pytest tests -q -m "not live_mcrit"
+
+  mcrit:
+    name: mcrit against SMDA cutwail
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      mongo:
+        image: mongo:7
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.adminCommand({ping: 1})'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --health-start-period 20s
+    steps:
+      - name: Check out picblocks
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out SMDA fixtures
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: danielplohmann/smda
+          path: smda
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            setup.py
+            requirements.txt
+
+      - name: Install mcrit and this picblocks
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install mcrit pytest requests
+          python -m pip install -e .
+
+      - name: Start mcrit
+        run: |
+          mcrit server > /tmp/mcrit-server.log 2>&1 &
+          mcrit worker > /tmp/mcrit-worker.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -sf http://127.0.0.1:8000/status >/dev/null; then
+              echo "mcrit is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "mcrit did not start"
+          tail -n 80 /tmp/mcrit-server.log || true
+          tail -n 80 /tmp/mcrit-worker.log || true
+          exit 1
+
+      - name: Hash a sample through mcrit
+        env:
+          MCRIT_URL: http://127.0.0.1:8000
+          SMDA_TESTS: ${{ github.workspace }}/smda/tests
+        run: python -m pytest tests/test_mcrit_live.py -v

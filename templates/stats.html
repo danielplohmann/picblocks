@@ -12,8 +12,9 @@
     <link rel="stylesheet" href="/static/css/styles.css" />
     <!-- Libraries -->
 
-    <!-- DATA IMPORT FOR TESTING REMOVE IN PRODUCTION -->
-    <script type="text/javascript" src="/static/js/s_stats.js"></script>
+    <script type="text/javascript">
+      const s_stats = {{ s_stats|tojson }};
+    </script>
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.1/chart.min.js"
       integrity="sha512-Wt1bJGtlnMtGP0dqNFH1xlkLBNpEodaiQ8ZN5JLA5wpc1sUlk/O5uuOMNgvzddzkpvZ9GLyYNa8w2s7rqiTk5Q=="
@@ -74,7 +75,6 @@
         <div class="row">
           <div class="col">
             <p></p>
-            <!--
        <table class="table">
 	       <tr>
 		       <th class="not_mapped_style" style="text-align:left">Database: </th>
@@ -93,9 +93,6 @@
 		       <td>{{number_blocks}}</td>
 	       </tr>
        </table>
-            -->
-
-            <!-- {{s_stats}} -->
           </div>
         </div>
         <div class="row">
@@ -382,6 +379,9 @@
 
       let similarChart;
       function drawFamilySimilarity(family) {
+        if (!s_stats || !s_stats.length || !family) {
+          return;
+        }
         if (similarChart) {
           similarChart.destroy();
         }
@@ -391,6 +391,11 @@
         );
       }
 
+      if (!s_stats || !s_stats.length) {
+        $('#totalFamilies').text('0');
+        $('#totalIdentified').text('0');
+        $('#totalUnidentified').text('0');
+      } else {
       const c1 = new Chart(
         document.getElementById('topVerifiedFamiliesChart'),
         topVerifiedFamilies(s_stats[0])
@@ -478,6 +483,7 @@
         );
       }
       drawFamilySimilarity(similar[0]);
+      }
     </script>
   </body>
 </html>

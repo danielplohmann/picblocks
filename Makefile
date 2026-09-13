@@ -6,11 +6,15 @@ package:
 publish:
 	python3 -m twine upload dist/*
 pylint:
-	python3 -m pylint --rcfile=.pylintrc blocks
+	python3 -m pylint --rcfile=.pylintrc picblocks
+lint:
+	ruff check .
+	ruff format --check .
+	ty check .
 test:
-	python3 -m nose
+	python3 -m pytest tests
 test-coverage:
-	python3 -m nose --with-coverage --cover-erase --cover-html-dir=./coverage-html --cover-html --cover-package=blocks
+	python3 -m pytest --cov=picblocks --cov-report=html:coverage-html tests
 clean:
 	find . | grep -E "(__pycache__|\.pyc|\.pyo$\)" | xargs rm -rf
 	rm -rf .coverage
