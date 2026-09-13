@@ -124,8 +124,9 @@ def parseBaseAddrFromArgs(filename):
 
 
 def getBitnessFromFilename(filename):
-    bitness = BlockHasher().parseBitnessFromFilename(filename)
-    return bitness if bitness is not None else 0
+    # None rather than 0: disassembleBuffer takes Optional[int] and estimates the bitness
+    # from the code itself when it is not told, which beats any guess made from the name
+    return BlockHasher().parseBitnessFromFilename(filename)
 
 
 def readFileContent(file_path):
